@@ -1,7 +1,8 @@
 const attachments = require("../data/attachments");
+const config = require('../config');
 const threadUtils = require("../threadUtils");
 
-module.exports = bot => {
+module.exports = (bot, sse) => {
   const addInboxServerCommand = (...args) => threadUtils.addInboxServerCommand(bot, ...args);
 
   // Mods can reply to modmail threads using !r or !reply
@@ -10,8 +11,14 @@ module.exports = bot => {
     if (! thread) return;
 
     const text = args.join(' ').trim();
+    let isAnonymous = false;
+
+    if (config.replyAnonDefault === true) {
+      isAnonymous = true;
+    }
+
     if (msg.attachments.length) await attachments.saveAttachmentsInMessage(msg);
-    await thread.replyToUser(msg.member, text, msg.attachments, false);
+    await thread.replyToUser(msg.member, text, msg.attachments, isAnonymous, sse);
     msg.delete();
   });
 
@@ -23,7 +30,7 @@ module.exports = bot => {
 
     const text = args.join(' ').trim();
     if (msg.attachments.length) await attachments.saveAttachmentsInMessage(msg);
-    await thread.replyToUser(msg.member, text, msg.attachments, true);
+    await thread.replyToUser(msg.member, text, msg.attachments, true, sse);
     msg.delete();
   });
 

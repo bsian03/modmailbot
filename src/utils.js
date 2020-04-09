@@ -70,6 +70,7 @@ function postError(str) {
  */
 function isStaff(member) {
   if (! config.inboxServerPermission) return true;
+  if (! member) return false;
   return member.permission.has(config.inboxServerPermission);
 }
 
@@ -131,7 +132,7 @@ function getUserMention(str) {
  * @returns {String}
  */
 function getTimestamp(...momentArgs) {
-  return moment.utc(...momentArgs).format('HH:mm');
+  return moment.utc(...momentArgs).format('[Today] [at] hh:mm A');
 }
 
 /**
@@ -264,6 +265,10 @@ function setDataModelProps(target, props) {
   }
 }
 
+function regEscape(str) {
+  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
 module.exports = {
   BotError,
 
@@ -292,4 +297,6 @@ module.exports = {
   trimAll,
 
   setDataModelProps,
+
+  regEscape,
 };

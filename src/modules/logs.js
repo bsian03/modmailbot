@@ -1,6 +1,7 @@
 const threadUtils = require('../threadUtils');
 const threads = require("../data/threads");
 const moment = require('moment');
+const config = require('../config');
 const utils = require("../utils");
 
 module.exports = bot => {
@@ -9,7 +10,6 @@ module.exports = bot => {
   addInboxServerCommand('logs', (msg, args, thread) => {
     async function getLogs(userId) {
       const userThreads = await threads.getClosedThreadsByUserId(userId);
-
       // Descending by date
       userThreads.sort((a, b) => {
         if (a.created_at > b.created_at) return -1;
@@ -23,6 +23,7 @@ module.exports = bot => {
         return `\`${formattedDate}\`: <${logUrl}>`;
       }));
 
+      if(! userThreads || ! userThreads.length) return msg.channel.createMessage('No logs found.');
       const message = `**Log files for <@${userId}>:**\n${threadLines.join('\n')}`;
 
       // Send the list of logs in chunks of 15 lines per message
@@ -35,7 +36,25 @@ module.exports = bot => {
       });
     }
 
+    async function deleteLogs(userId) {
+      return await threads.deleteClosedThreadsByUserId(userId);
+      msg.channel.createMessage(`Deleted log files for <@!${userId}>`);
+    }
+
     if (args.length > 0) {
+      if (args[0] === 'delete') {
+        const userId = utils.getUserMention(args.slice(1).join(' '));
+        if (! userId) return;
+
+        if (! config.inboxAdminRoleId) {
+          return;
+        }
+
+        if (msg.member.roles && msg.member.roles.includes(config.inboxAdminRoleId)) {
+          deleteLogs(userId);
+        }
+      }
+
       // User mention/id as argument
       const userId = utils.getUserMention(args.join(' '));
       if (! userId) return;
@@ -49,6 +68,6 @@ module.exports = bot => {
   addInboxServerCommand('loglink', async (msg, args, thread) => {
     if (! thread) return;
     const logUrl = await thread.getLogUrl();
-    thread.postSystemMessage(`Log URL: ${logUrl}`);
+    thread.postSystemMessage(`Log URL: <${logUrl}>`);
   });
 };

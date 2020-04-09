@@ -1,88 +1,160 @@
-const http = require('http');
+const express = require('express');
+const cookieParser = require('cookie-parser');
 const mime = require('mime');
-const url = require('url');
 const fs = require('fs');
-const moment = require('moment');
+const https = require('https');
+const path = require('path');
+const superagent = require('superagent');
 const config = require('../config');
+const oauth2 = require('../oauth2');
 const threads = require('../data/threads');
 const attachments = require('../data/attachments');
-
-const {THREAD_MESSAGE_TYPE} = require('../data/constants');
+const knex = require('../knex');
 
 function notfound(res) {
-  res.statusCode = 404;
-  res.end('Page Not Found');
+  res.status(404);
+  res.json({ message: '404: Resource Not Found' });
 }
 
-async function serveLogs(res, pathParts) {
-  const threadId = pathParts[pathParts.length - 1];
-  if (threadId.match(/^[0-9a-f\-]+$/) === null) return notfound(res);
+async function getLogs (threadId) {
+  if (threadId.match(/^[0-9a-f\-]+$/) === null)
+    return;
 
   const thread = await threads.findById(threadId);
-  if (! thread) return notfound(res);
-
-  const threadMessages = await thread.getThreadMessages();
-  const lines = threadMessages.map(message => {
-    // Legacy messages are the entire log in one message, so just serve them as they are
-    if (message.message_type === THREAD_MESSAGE_TYPE.LEGACY) {
-      return message.body;
-    }
-
-    let line = `[${moment.utc(message.created_at).format('YYYY-MM-DD HH:mm:ss')}] `;
-
-    if (message.message_type === THREAD_MESSAGE_TYPE.SYSTEM) {
-      // System messages don't need the username
-      line += message.body;
-    } else if (message.message_type === THREAD_MESSAGE_TYPE.FROM_USER) {
-      line += `[FROM USER] ${message.user_name}: ${message.body}`;
-    } else if (message.message_type === THREAD_MESSAGE_TYPE.TO_USER) {
-      line += `[TO USER] ${message.user_name}: ${message.body}`;
-    } else {
-      line += `${message.user_name}: ${message.body}`;
-    }
-
-    return line;
-  });
-
-  res.setHeader('Content-Type', 'text/plain; charset=UTF-8');
-  res.end(lines.join('\n'));
+  if (! thread) return;
+  
+  return await thread.getThreadMessages();
 }
 
-function serveAttachments(res, pathParts) {
-  const desiredFilename = pathParts[pathParts.length - 1];
-  const id = pathParts[pathParts.length - 2];
-
-  if (id.match(/^[0-9]+$/) === null) return notfound(res);
-  if (desiredFilename.match(/^[0-9a-z._-]+$/i) === null) return notfound(res);
+function getAttachment (id, desiredFilename) {
+  if (! /^\d+$/.test(id))
+    return;
+  if (desiredFilename.match(/^[0-9a-z._-]+$/i) === null)
+    return;
 
   const attachmentPath = attachments.getPath(id);
-  fs.access(attachmentPath, (err) => {
-    if (err) return notfound(res);
+  if (! fs.existsSync(attachmentPath))
+    return;
 
-    const filenameParts = desiredFilename.split('.');
-    const ext = (filenameParts.length > 1 ? filenameParts[filenameParts.length - 1] : 'bin');
-    const fileMime = mime.lookup(ext);
-
-    res.setHeader('Content-Type', fileMime);
-
-    const read = fs.createReadStream(attachmentPath);
-    read.pipe(res);
-  })
+  const filenameParts = desiredFilename.split('.');
+  const ext = (filenameParts.length > 1 ? filenameParts[filenameParts.length - 1] : 'bin');
+  return [mime.lookup(ext), fs.readFileSync(attachmentPath)];
 }
 
-module.exports = () => {
-  const server = http.createServer((req, res) => {
-    const parsedUrl = url.parse(`http://${req.url}`);
-    const pathParts = parsedUrl.path.split('/').filter(v => v !== '');
+module.exports = (bot, sse) => {
+  const app = express();
+  
+  app.use(cookieParser());
+  
+  app.get('/attachments/:id/:name', async (req, res) => {
+    let [mime, attachment] = getAttachment(req.params.id, req.params.name) || [];
 
-    if (parsedUrl.path.startsWith('/logs/')) {
-      serveLogs(res, pathParts);
-    } else if (parsedUrl.path.startsWith('/attachments/')) {
-      serveAttachments(res, pathParts);
-    } else {
-      notfound(res);
-    }
+    if (! attachment)
+      return notfound(res);
+
+    res.set('Content-Type', mime);
+    res.send(attachment);
   });
 
-  server.listen(config.port);
+  if (config.dashAuthRoles || config.dashAuthUsers) {
+    app.get(config.redirectPath, oauth2.login);
+    app.use(oauth2.checkAuth);
+  }
+
+  app.use(express.static(path.join(__dirname, '../dashboard/')));
+  app.use((req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    next();
+  })
+
+  app.get('/threads', async (req, res) => {
+    let { limit, page, user, sort_by, reverse } = req.query;
+    limit = parseInt(limit) || 50;
+    if (limit < 1) limit = 1;
+    if (limit > 100) limit = 100;
+    page = parseInt(page) || 0;
+    reverse = reverse != null;
+    let q = knex('threads');
+    if (user)
+      q.where('user_id', user);
+    else
+      q.select('*');
+    let total = (await q.clone().count())[0]['count(*)'];
+    if (sort_by)
+      q.orderBy(sort_by, reverse ? 'asc' : 'desc');
+    q.orderBy('created_at', reverse ? 'desc' : 'asc');
+    let offset = page * limit;
+    res.json({
+      total: total,
+      threads: await q.limit(limit).offset(offset)
+    });
+  });
+  app.get('/threads/:id', async (req, res) => {
+    let thread = await knex('threads').where('id', req.params.id).first();
+    if (! thread)
+      return notfound(res);
+
+    res.json(thread);
+  });
+  app.get('/users', async (req, res) => {
+    let users = await knex('threads').select('user_id', 'user_name')
+      .groupBy('user_id').orderBy('created_at', 'desc');
+    res.json(users.map(u => ({ id: u.user_id, name: u.user_name })));
+  });
+  app.get('/logs/:id', async (req, res) => {
+    let logs = await getLogs(req.params.id);
+    if (! logs)
+      return notfound(res);
+
+    res.json(logs);
+  });
+  app.get('/avatars/:id', async (req, res) => {
+    superagent.get(`https://discordapp.com/api/users/${req.params.id}`)
+    .set('Authorization', bot.token)
+    .end((error, response) => {
+      if (error) {
+        if (error.status === 404) {
+          res.status(400);
+          res.send('<pre>400 Bad Request</pre>');
+        } else {
+          res.status(500);
+          console.log(error)  
+          res.send(`<pre>500 Server Error: ${error}</pre>`);
+        }
+      } else {
+        res.set('Cache-Control', 'max-age=3600');
+        let user = response.body;
+        if (user.avatar) {
+          let format = req.query.format || 'png'
+          if (format === 'gif' && ! user.avatar.startsWith('a_'))
+            format = 'png'
+          res.redirect(`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${format}`);
+        } else {
+          let defaultAvatars = [
+            '6debd47ed13483642cf09e832ed0bc1b',
+            '322c936a8c8be1b803cd94861bdfa868',
+            'dd4dbc0016779df1378e7812eabaa04d',
+            '0e291f67c9274a1abdddeb3fd919cbaa',
+            '1cbd08c76f8af6dddce02c5138971129'
+          ];
+          let avatar = defaultAvatars[user.discriminator % defaultAvatars.length];
+          res.redirect(`https://discordapp.com/assets/${avatar}.png`);
+        }
+      }
+    }); 
+  });
+  
+  app.get('/stream', sse.init);
+  
+  if (config.https) {
+    const httpsServer = https.createServer({
+      key: fs.readFileSync(config.https.privateKey, 'utf8'),
+      cert: fs.readFileSync(config.https.certificate, 'utf8'),
+      ca: fs.readFileSync(config.https.ca, 'utf8')
+    }, app);
+
+    httpsServer.listen(config.port);
+  } else {
+    app.listen(config.port);
+  }
 };

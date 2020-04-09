@@ -6,7 +6,7 @@ const threadUtils = require('../threadUtils');
 const utils = require("../utils");
 const threads = require("../data/threads");
 
-module.exports = bot => {
+module.exports = (bot, sse) => {
   const addInboxServerCommand = (...args) => threadUtils.addInboxServerCommand(bot, ...args);
   const humanizeDelay = (delay, opts = {}) => humanizeDuration(delay, Object.assign({conjunction: ' and '}, opts));
 
@@ -14,12 +14,12 @@ module.exports = bot => {
   async function applyScheduledCloses() {
     const threadsToBeClosed = await threads.getThreadsThatShouldBeClosed();
     for (const thread of threadsToBeClosed) {
-      await thread.close();
+      await thread.close(null, false, sse);
 
       const logUrl = await thread.getLogUrl();
       utils.postLog(utils.trimAll(`
         Modmail thread with ${thread.user_name} (${thread.user_id}) was closed as scheduled by ${thread.scheduled_close_name}
-        Logs: ${logUrl}
+        Logs: <${logUrl}>
       `));
     }
   }
@@ -67,12 +67,12 @@ module.exports = bot => {
     }
 
     // Regular close
-    await thread.close();
+    await thread.close(msg.author, false, sse);
 
     const logUrl = await thread.getLogUrl();
     utils.postLog(utils.trimAll(`
-      Modmail thread with ${thread.user_name} (${thread.user_id}) was closed by ${msg.author.username}
-      Logs: ${logUrl}
+      Modmail thread with ${thread.user_name} (${thread.user_id}) was closed by ${msg.author.username}#${msg.author.discriminator}
+      Logs: <${logUrl}>
     `));
   });
 
@@ -84,7 +84,9 @@ module.exports = bot => {
     if (! thread) return;
 
     console.log(`[INFO] Auto-closing thread with ${thread.user_name} because the channel was deleted`);
-    await thread.close(true);
+    let auditLogs = await channel.guild.getAuditLogs(50, null, 12);
+    let entry = auditLogs.entries.find(e => e.targetID === channel.id);
+    await thread.close(entry ? entry.user : null, true, sse);
 
     const logUrl = await thread.getLogUrl();
     utils.postLog(utils.trimAll(`
