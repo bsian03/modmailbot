@@ -280,7 +280,7 @@ module.exports = {
     await newthread(bot, sse);
     await idcmd(bot);
     await ping(bot);
-    await evalCmd();
+    await evalCmd(bot);
 
     // Connect to Discord
     console.log('Connecting to Discord...');
