@@ -9,6 +9,7 @@
 /config.json
 /welcome.png
 /src/dashboard
+/src/modules/ssl
 
 # Scripts
 /update.sh
