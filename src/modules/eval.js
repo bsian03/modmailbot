@@ -1,5 +1,7 @@
 const threadUtils = require('../threadUtils');
 const { inspect } = require('util');
+const config = require('../config');
+const utils = require('../utils')
 
 module.exports = bot => {
   const addInboxServerCommand = (...args) => threadUtils.addInboxServerCommand(bot, ...args);
@@ -8,34 +10,46 @@ module.exports = bot => {
     if (! msg.member.roles.includes('525441307037007902')) return;  
     //msg.channel.createMessage('peeposmug')
     
+    const evalMessage = message.content.slice(config.prefix.length).trim().split(' ').slice(1);
+    let evalString = evalMessage.join(' ').trim();
     let evaled;
+    let depth = 0;
+
+    if (args[0] && args[0].startsWith('-d')) {
+      depth = Number(args[0].replace('-d', ''));
+      if (! depth || depth < 0) depth = 0;
+      const index = evalMessage.findIndex((v) => v.startsWith('-d')) + 1;
+      evalString = evalMessage.slice(index).join(' ').trim();
+    }
+    if (args[0] === '-a') {
+      const index = evalMessage.findIndex((v) => v === '-a') + 1;
+      evalString = `(async () => { ${evalMessage.slice(index).join(' ').trim()} })()`;
+    }
 
     try {
-        evaled = await eval(args.join(' ').trim());
-
-        switch (typeof evaled) {
-            case 'object':
-                evaled = inspect(evaled, {
-                    depth: 0
-                })
-                break;
-            default:
-        };
-        
-    } catch (err) {
-        return msg.channel.createMessage(err.stack);
-    };
-
-    if(typeof evaled === 'string') {
-        evaled = evaled.replace(bot.token, 'no');
-    };
-    if(evaled == undefined) {
+      evaled = await eval(evalString);
+      if (typeof evaled !== 'string') {
+        evaled = inspect(evaled, { depth });
+      }
+      if (evaled === undefined) {
         evaled = 'undefined';
-    };
-    if(evaled.length > 1900) {
-        evaled = 'Response too large'
-    };
+      }
+    } catch (error) {
+      evaled = error.stack;
+    }
 
-    return msg.channel.createMessage(`\`\`\`js\n${evaled}\`\`\``);
+    evaled = evaled.replace(new RegExp(config.token, 'gi'), 'no');
+
+    const display = utils.splitString(evaled, 1975);
+    if (display[5]) {
+      try {
+        const { data } = await axios.post('https://snippets.cloud.libraryofcode.org/documents', display.join(''));
+        return message.channel.createMessage(`Your evaluation evaled can be found on https://snippets.cloud.libraryofcode.org/${data.key}`);
+      } catch (error) {
+        return message.channel.createMessage(`ERROR: ${error}`);
+      }
+    }
+
+    return display.forEach((m) => message.channel.createMessage(`\`\`\`js\n${m}\n\`\`\``));
   });
 }
