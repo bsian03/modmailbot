@@ -44,8 +44,8 @@ module.exports = bot => {
     const display = utils.splitString(evaled, 1975);
     if (display[5]) {
       try {
-        const { data } = await superagent.post('https://snippets.cloud.libraryofcode.org/documents').send(display.join(''));
-        return msg.channel.createMessage(`Your evaluation evaled can be found on https://snippets.cloud.libraryofcode.org/${JSON.parse(data).key}`);
+        const { text } = await superagent.post('https://snippets.cloud.libraryofcode.org/documents').send(display.join(''));
+        return msg.channel.createMessage(`Your evaluation evaled can be found on https://snippets.cloud.libraryofcode.org/${JSON.parse(text).key}`);
       } catch (error) {
         return msg.channel.createMessage(`ERROR: ${error}`);
       }
