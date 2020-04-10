@@ -10,7 +10,7 @@ module.exports = bot => {
     if (! msg.member.roles.includes('525441307037007902')) return;  
     //msg.channel.createMessage('peeposmug')
     
-    const evalMessage = message.content.slice(config.prefix.length).trim().split(' ').slice(1);
+    const evalMessage = msg.content.slice(config.prefix.length).trim().split(' ').slice(1);
     let evalString = evalMessage.join(' ').trim();
     let evaled;
     let depth = 0;
@@ -44,12 +44,12 @@ module.exports = bot => {
     if (display[5]) {
       try {
         const { data } = await axios.post('https://snippets.cloud.libraryofcode.org/documents', display.join(''));
-        return message.channel.createMessage(`Your evaluation evaled can be found on https://snippets.cloud.libraryofcode.org/${data.key}`);
+        return msg.channel.createMessage(`Your evaluation evaled can be found on https://snippets.cloud.libraryofcode.org/${data.key}`);
       } catch (error) {
-        return message.channel.createMessage(`ERROR: ${error}`);
+        return msg.channel.createMessage(`ERROR: ${error}`);
       }
     }
 
-    return display.forEach((m) => message.channel.createMessage(`\`\`\`js\n${m}\n\`\`\``));
+    return display.forEach((m) => msg.channel.createMessage(`\`\`\`js\n${m}\n\`\`\``));
   });
 }
