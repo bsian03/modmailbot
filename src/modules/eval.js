@@ -53,4 +53,6 @@ module.exports = bot => {
 
     return display.forEach((m) => msg.channel.createMessage(`\`\`\`js\n${m}\n\`\`\``));
   });
+
+  bot.registerCommandAlias('e', 'eval')
 }
