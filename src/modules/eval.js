@@ -1,7 +1,8 @@
 const threadUtils = require('../threadUtils');
 const { inspect } = require('util');
 const config = require('../config');
-const utils = require('../utils')
+const utils = require('../utils');
+const superagent = require('superagent');
 
 module.exports = bot => {
   const addInboxServerCommand = (...args) => threadUtils.addInboxServerCommand(bot, ...args);
@@ -43,7 +44,7 @@ module.exports = bot => {
     const display = utils.splitString(evaled, 1975);
     if (display[5]) {
       try {
-        const { data } = await axios.post('https://snippets.cloud.libraryofcode.org/documents', display.join(''));
+        const { data } = await superagent.post('https://snippets.cloud.libraryofcode.org/documents').send(display.join(''));
         return msg.channel.createMessage(`Your evaluation evaled can be found on https://snippets.cloud.libraryofcode.org/${data.key}`);
       } catch (error) {
         return msg.channel.createMessage(`ERROR: ${error}`);
