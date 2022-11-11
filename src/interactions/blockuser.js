@@ -39,7 +39,8 @@ module.exports = {
         blocked.logBlock({
           id: thread.user_id,
           username: thread.user_name.split("#")[0],
-          discriminator: thread.user_name.split("#")[1]
+          discriminator: thread.user_name.split("#")[1],
+          mention: `<@${thread.user_id}>`
         }, moderator, reason, customID === "unblock");
         interaction.createMessage(`Blocked <@${thread.user_id}> (${thread.user_id}) from modmail!`);
       });
