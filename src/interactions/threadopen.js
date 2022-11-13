@@ -46,7 +46,7 @@ module.exports = {
         if (! snip) throw new Error("Support redirect snippet does not exist");
         const member = bot.guilds.get("203039963636301824").members.get(interaction.user.id);
         if (member && member.roles.includes("265342465483997184")) {
-          snip += config.dynoPremiumSupport;
+          snip.body += config.dynoPremiumSupport;
         }
         await interaction.createFollowup(snip.body);
         break;
