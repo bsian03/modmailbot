@@ -89,6 +89,12 @@ module.exports = (bot, sse) => {
     next();
   });
 
+  // NOTE express-sse doesn't seem to know that res.flush() doesn't exist without having a compression module
+  app.use((req, res, next) => {
+    res.flush = () => undefined;
+    next();
+  });
+
   app.get("/threads", async (req, res) => {
     /**
      * @type {{ [s: string]: any; }}
