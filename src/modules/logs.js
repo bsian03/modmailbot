@@ -21,7 +21,7 @@ module.exports = bot => {
         userThreads = userThreads.filter((t) => ! t.isPrivate);
       }
 
-      if (! userThreads.length) return bot.createMessage(msg.channel.id, "No logs found.");
+      if (! userThreads.length) return utils.postError(thread, "No logs found for that user.", null, msg);
 
       // Descending by date
       userThreads.sort((a, b) => {
@@ -55,7 +55,7 @@ module.exports = bot => {
      */
     async function deleteLogs(userId) {
       await threads.deleteClosedThreadsByUserId(userId);
-      bot.createMessage(msg.channel.id, `Deleted log files for <@!${userId}>`);
+      utils.postSuccess(thread, `Deleted log files for <@!${userId}>`, null, msg);
     }
 
     let userId = thread && thread.user_id;
@@ -63,7 +63,7 @@ module.exports = bot => {
     if (args.length > 0) {
       if (args[0] === "delete" && utils.isAdmin(msg.member)) {
         const userId = utils.getUserMention(args.slice(1).join(" "));
-        if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+        if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
         return deleteLogs(userId);
       }
@@ -71,7 +71,7 @@ module.exports = bot => {
       userId = utils.getUserMention(args.join(" "));
     }
 
-    if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+    if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
     // Calling !logs without args in a modmail thread returns the logs of the user of that thread
 

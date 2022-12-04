@@ -422,10 +422,10 @@ async function createThreadFromInteraction(interaction, originalMsg, systemMsg, 
     });
   } catch (error) {
     if (error.code === 50035 && error.message.includes("words not allowed")) {
-      utils.postError(`Tried to open a thread with ${originalMsg.author.username}#${originalMsg.author.discriminator} (${originalMsg.author.id}) but failed due to a restriction on channel names for servers in Server Discovery`);
+      utils.postErrorLog(`Tried to open a thread with ${originalMsg.author.username}#${originalMsg.author.discriminator} (${originalMsg.author.id}) but failed due to a restriction on channel names for servers in Server Discovery`);
       return interaction.createMessage("Thread was unable to be opened - please change your username and try again!");
     }
-    utils.postError(`\`\`\`js\nError creating modmail channel for ${originalMsg.author.username}#${originalMsg.author.discriminator}!\n${error.stack}\n\`\`\``);
+    utils.postErrorLog(`\`\`\`js\nError creating modmail channel for ${originalMsg.author.username}#${originalMsg.author.discriminator}!\n${error.stack}\n\`\`\``);
     return interaction.createMessage("Thread was unable to be opened due to an unknown error. If this persists, please contact a member of the staff team!");
   }
 

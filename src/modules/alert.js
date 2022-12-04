@@ -14,13 +14,9 @@ module.exports = bot => {
     await thread.alertStatus(msg.member.id, ! status);
 
     if (! status) {
-      utils.postSystemMessageWithFallback(msg.channel, thread,
-        `I'll mention you whenever **${thread.user_name}** sends a new message.`
-      );
+      utils.postSuccess(thread, `I'll mention you whenever **${thread.user_name}** sends a new message.`, null, msg);
     } else {
-      utils.postSystemMessageWithFallback(msg.channel, thread,
-        "I won't give you new message alerts for this thread anymore."
-      );
+      utils.postSuccess(thread, "I won't give you new message alerts for this thread anymore.", null, msg);
     }
   });
 };

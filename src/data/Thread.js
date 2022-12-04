@@ -11,7 +11,7 @@ const attachments = require("./attachments");
 const ThreadMessage = require("./ThreadMessage");
 
 const {THREAD_MESSAGE_TYPE, THREAD_STATUS} = require("../utils/constants");
-const {internalButtons} = require("../utils/components");
+const {internalButtons, cancelClose} = require("../utils/components");
 const lastMsgs = new Map();
 
 /**
@@ -84,7 +84,7 @@ class Thread {
     try {
       dmMessage = await this.postToUser(dmContent, files);
     } catch (e) {
-      await this.postSystemMessage(`Error while replying to user: ${e.message}`);
+      utils.postError(this, `Error while replying to user: ${e.message}`);
       return;
     }
 
@@ -105,7 +105,7 @@ class Thread {
 
     if (this.scheduled_close_at) {
       await this.cancelScheduledClose();
-      const systemMessage = await this.postSystemMessage("Cancelling scheduled closing of this thread due to new reply");
+      const systemMessage = utils.postInfo(this, "Cancelling scheduled closing of this thread due to new reply");
       if (systemMessage) {
         setTimeout(() => systemMessage.delete(), 30000);
       }
@@ -213,7 +213,8 @@ class Thread {
         });
       } else {
         systemMessage = await this.postSystemMessage({
-          content: `<@!${this.scheduled_close_id}> The thread was updated, use \`!close cancel\` if you would like to cancel.`,
+          content: `<@!${this.scheduled_close_id}> The thread was updated, use \`!close cancel\` or press the button below if you would like to cancel.`,
+          components: cancelClose
         });
       }
 

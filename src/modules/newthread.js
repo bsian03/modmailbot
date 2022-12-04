@@ -11,11 +11,11 @@ const utils = require("../utils/utils");
 module.exports = (bot, sse) => {
   threadUtils.addInboxServerCommand(bot, "newthread", async (msg, args, thread) => {
     const userId = utils.getUserMention(args[0]);
-    if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+    if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
     const user = bot.users.get(userId);
     if (! user) {
-      utils.postSystemMessageWithFallback(msg.channel, thread, "User not found!");
+      utils.postError(thread, "I can't find that user!", null, msg);
       return;
     }
 
@@ -35,12 +35,12 @@ module.exports = (bot, sse) => {
         str += `: <#${existingThread.channel_id}>`;
       }
 
-      utils.postSystemMessageWithFallback(msg.channel, thread, `Cannot create a new thread; ${str}.`);
+      utils.postError(thread, `Cannot create a new thread; ${str}.`, null, msg);
       return;
     }
 
     const createdThread = await threads.createNewThreadForUser(user, null, true);
-    createdThread.postSystemMessage(`Thread was opened by ${msg.author.username}#${msg.author.discriminator}`);
+    utils.postInfo(createdThread, `Thread was opened by ${msg.author.username}#${msg.author.discriminator}`, null, msg);
 
     sse.send({ thread: createdThread }, "threadOpen", null);
 

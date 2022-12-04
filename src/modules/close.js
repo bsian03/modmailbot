@@ -6,6 +6,7 @@ const config = require("../config");
 const threads = require("../data/threads");
 const threadUtils = require("../utils/threadUtils");
 const utils = require("../utils/utils");
+const { confirmClose, cancelClose } = require("../utils/components");
 
 /**
  * @param {Eris.CommandClient} bot
@@ -55,9 +56,9 @@ module.exports = (bot, sse) => {
         // Cancel timed close
         if (thread.scheduled_close_at) {
           await thread.cancelScheduledClose();
-          thread.postSystemMessage("Cancelled scheduled closing.");
+          utils.postSuccess(thread, "***Thread close has been canceled.***");
         } else {
-          thread.postSystemMessage("This thread is not scheduled to close!");
+          utils.postError(thread, "This thread is not scheduled to close!");
         }
 
         return;
@@ -68,25 +69,25 @@ module.exports = (bot, sse) => {
         } else {
           message = "This thread is not scheduled to close!";
         }
-        thread.postSystemMessage(message);
+        utils.postInfo(thread, message);
         return;
       }
 
       // Set a timed close
       const delay = utils.convertDelayStringToMS(args.join(" "));
       if (delay === 0 || delay === null) {
-        thread.postSystemMessage("Invalid delay specified. Format: \"1h30m\"");
+        utils.postError(thread, "Invalid delay specified. Format: \"1h30m\"");
         return;
       }
 
-      let closeMsg = "Thread is now scheduled to be closed in ";
+      let closeMsg = "Thread will now close in ";
       if (delay === 314000) { // Pi easter egg
         if (msg.author.id !== "334093318818627586") {
-          thread.postSystemMessage("Invalid delay specified. Only Pi can set a thread to close for 314 seconds!");
+          utils.postError(thread, "Invalid delay specified. Only Pi can set a thread to close for 314 seconds!");
           return;
         }
 
-        closeMsg += "π * 100 seconds";
+        closeMsg += "π * 100 seconds.";
       } else {
         closeMsg += humanizeDelay(delay);
       }
@@ -94,14 +95,19 @@ module.exports = (bot, sse) => {
       const closeAt = moment.utc().add(delay, "ms");
 
       await thread.scheduleClose(closeAt.format("YYYY-MM-DD HH:mm:ss"), msg.author);
-      return thread.postSystemMessage(`${closeMsg}. Use \`${config.prefix}close cancel\` to cancel.`);
+      return utils.postSuccess(thread, `***${closeMsg}***`, cancelClose);
     }
 
     // Regular close
-    await thread.close(msg.author, false, sse);
+    const conformation = {
+      embeds: [{
+        description: "<:DaveEgg:698046132605157396> Select an option below to close the thread.\nYou can also use `!close [time]` to schedule a time manualy.",
+        color: 0x337FD5,
+      }],
+      components: confirmClose,
+    };
 
-    const logUrl = await thread.getLogUrl();
-    utils.postLog(thread, msg.author, logUrl);
+    return await thread.postSystemMessage(conformation, true);
   });
 
   // Auto-close threads if their channel is deleted
@@ -112,7 +118,7 @@ module.exports = (bot, sse) => {
     if (! thread) return;
 
     console.log(`[INFO] Auto-closing thread with ${thread.user_name} because the channel was deleted`);
-    let auditLogs = await channel.guild.getAuditLogs(50, null, 12);
+    let auditLogs = await channel.guild.getAuditLog({ limit: 50, actionType: 12});
     let entry = auditLogs.entries.find(e => e.targetID === channel.id);
     await thread.close(entry ? entry.user : null, true, sse);
 

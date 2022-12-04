@@ -57,6 +57,135 @@ async function getLogChannel() {
 }
 
 /**
+ * Posts an info embed to an interaction
+ * @param {Eris.ComponentInteraction} interaction the interaction to respond to
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @param {Boolean} ephemeral Whether the message should be ephemeral
+ */
+function postInteractionInfo(interaction, text, component, ephemeral = false) {
+  const daveInfo = {
+    embeds: [{
+      color: 0x337FD5,
+      description: `<:DaveEgg:698046132605157396> ${text}`,
+    }]
+  };
+  if (component) {
+    daveInfo.components = component;
+  }
+  if (ephemeral === true) {
+    daveInfo.flags = 64;
+  }
+  interaction.createMessage(daveInfo);
+}
+
+/**
+ * Posts an error embed to an interaction
+ * @param {Eris.ComponentInteraction} interaction the interaction to respond to
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @param {Boolean} ephemeral Whether the message should be ephemeral
+ */
+function postInteractionError(interaction, text, component, ephemeral = false) {
+  const daveError = {
+    embeds: [{
+      color: 0xF04947,
+      description: `<:dynoError:696561633425621078> ${text}`,
+    }]
+  };
+  if (component) {
+    daveError.components = component;
+  }
+  if (ephemeral === true) {
+    daveError.flags = 64;
+  }
+  interaction.createMessage(daveError);
+}
+
+/**
+ * Posts a success embed to an interaction
+ * @param {Eris.ComponentInteraction} interaction the interaction to respond to
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @param {Boolean} ephemeral Whether the message should be ephemeral
+ */
+function postInteractionSuccess(interaction, text, component, ephemeral = false) {
+  const daveSuccess = {
+    embeds: [{
+      color: 0x43B581,
+      description: `<:dynoSuccess:696561641227288639> ${text}`,
+    }]
+  };
+  if (component) {
+    daveSuccess.components = component;
+  }
+  if (ephemeral === true) {
+    daveSuccess.flags = 64;
+  }
+  interaction.createMessage(daveSuccess);
+}
+
+/**
+ * Posts an info embed to a thread
+ * @param {Thread} thread the thread the log is referencing
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @param {Eris.Message} msg the message object
+ */
+function postInfo(thread, text, component, msg) {
+  const daveInfo = {
+    embeds: [{
+      color: 0x337FD5,
+      description: `<:DaveEgg:698046132605157396> ${text}`,
+    }]
+  };
+  if (component) {
+    daveInfo.components = component;
+  }
+  postSystemMessageWithFallback(msg ? msg.channel : thread.channel_id, thread, daveInfo, true);
+}
+
+/**
+ * Posts an error embed to a thread
+ * @param {Thread} thread the thread the log is referencing
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @param {Eris.Message} msg the message object
+ */
+function postError(thread, text, component, msg) {
+  const daveError = {
+    embeds: [{
+      color: 0xF04947,
+      description: `<:dynoError:696561633425621078> ${text}`,
+    }]
+  };
+  if (component) {
+    daveError.components = component;
+  }
+  postSystemMessageWithFallback(msg ? msg.channel : thread.channel_id, thread, daveError);
+}
+
+/**
+ * Posts a success embed to a thread
+ * @param {Thread} thread the thread the log is referencing
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @param {Eris.Message} msg the message object
+ */
+function postSuccess(thread, text, component, msg) {
+  const daveSuccess = {
+    embeds: [{
+      color: 0x43B581,
+      description: `<:dynoSuccess:696561641227288639> ${text}`,
+    }]
+  };
+  if (component) {
+    daveSuccess.components = component;
+  }
+  postSystemMessageWithFallback(msg ? msg.channel : thread.channel_id, thread, daveSuccess);
+}
+
+/**
  * Posts a thread log in log channel
  * @param {Thread} thread the thread the log is referencing
  * @param {Eris.Member} moderator the moderator that executed the log
@@ -65,7 +194,7 @@ async function getLogChannel() {
  */
 function postLog(thread, moderator, logLink, reason) {
   const logData = {
-    embed: {
+    embeds: [{
       author: {name: `Thread Closed | ${thread.user_name}`},
       color: 0x337FD5,
       timestamp: new Date(),
@@ -75,15 +204,15 @@ function postLog(thread, moderator, logLink, reason) {
         {name: "Moderator", value: `${moderator.mention}`, inline: true},
         {name: "Thread", value: `[Log Link](${logLink})`, inline: true}
       ]
-    }
+    }]
   };
   if (reason) {
-    logData.embed.fields.push({name: "Reason", value: `${reason}`, inline: true});
+    logData.embeds[0].fields.push({name: "Reason", value: `${reason}`, inline: true});
   }
   getLogChannel().then(c => c.createMessage(logData));
 }
 
-function postError(str) {
+function postErrorLog(str) {
   getLogChannel().then(c => c.createMessage({
     content: `${getInboxMention()}**Error:** ${str.trim()}`,
     allowedMentions: {
@@ -412,8 +541,14 @@ module.exports = {
   getInboxGuild,
   getMainGuild,
   getLogChannel,
+  postInteractionInfo,
+  postInteractionError,
+  postInteractionSuccess,
+  postInfo,
   postError,
+  postSuccess,
   postLog,
+  postErrorLog,
   handleError,
 
   isAdmin,

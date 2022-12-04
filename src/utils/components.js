@@ -2,28 +2,119 @@
  * These component objects are used during the process of reporting a user, and
  * requesting help with premium/payments!
  */
-const internalClose = [{
+const confirmClose = [{
+  type: 1,
+  components: [{
+    type: 3,
+    custom_id: "thread:confirmClose",
+    placeholder: "Select a time to schedule close",
+    options: [
+        {
+            label: "Close in 5mins",
+            value: "thread:closeIn5m",
+            emoji: {
+              name: "DaveHangUp",
+              id: "815830349816659968",
+            }
+        },
+        {
+            label: "Close in 15mins",
+            value: "thread:closeIn15m",
+            emoji: {
+              name: "DaveHangUp",
+              id: "815830349816659968",
+            }
+        },
+        {
+            label: "Close in 30mins",
+            value: "thread:closeIn30m",
+            emoji: {
+              name: "DaveHangUp",
+              id: "815830349816659968",
+            }
+        }, 
+        {
+            label: "Close in 1hr",
+            value: "thread:closeIn1h",
+            emoji: {
+              name: "DaveHangUp",
+              id: "815830349816659968",
+            }
+        },
+        {
+            label: "Close in 24hrs",
+            value: "thread:closeIn24h",
+            emoji: {
+              name: "DaveHangUp",
+              id: "815830349816659968",
+            }
+        },
+        {
+            label: "Close in π",
+            value: "thread:close314",
+            emoji: {
+              name: "DaveHangUp",
+              id: "815830349816659968",
+            }
+        },
+    ]
+}]
+}];
+
+const cancelClose = [{
+  type: 1,
+  components: [
+    {
+      type: 2,
+      style: 3,
+      label: "Cancel Close",
+      emoji: {
+        name: "DaveThinking",
+        id: "796834960706502676"
+      },
+      custom_id: "thread:cancelClose"
+    }
+  ]
+}];
+
+const cancelSuspend = [{
+  type: 1,
+  components: [
+    {
+      type: 2,
+      style: 3,
+      label: "Unsuspend",
+      emoji: {
+        name: "DaveThinking",
+        id: "796834960706502676"
+      },
+      custom_id: "thread:cancelSuspend"
+    }
+  ]
+}];
+
+const internalLeave = [{
   type: 1,
   components: [
     {
       type: 2,
       style: 4,
-      label: "Close Thread",
+      label: "Close in 10m",
       emoji: {
         name: "DaveHangUp",
         id: "815830349816659968"
       },
-      custom_id: "thread:close"
+      custom_id: "thread:closeIn10m"
     },
     {
       type: 2,
       style: 4,
-      label: "Close Thread in 10m",
+      label: "Suspend",
       emoji: {
         name: "DaveHangUp",
         id: "815830349816659968"
       },
-      custom_id: "thread:closeIn10"
+      custom_id: "thread:suspend"
     }
   ]
 }];
@@ -54,22 +145,22 @@ const internalButtons = [{
     {
       type: 2,
       style: 1,
+      label: "Redirect to Support",
+      emoji: {
+        name: "DaveDerp",
+        id: "687013677681213484"
+      },
+      custom_id: "thread:redirectSupport"
+    },
+    {
+      type: 2,
+      style: 1,
       label: "Move to Council",
       emoji: {
         name: "DaveBanana",
         id: "752731353266520084"
       },
       custom_id: "thread:redirectAdmins"
-    },
-    {
-      type: 2,
-      style: 1,
-      label: "Redirect to Support Channel",
-      emoji: {
-        name: "DaveDerp",
-        id: "687013677681213484"
-      },
-      custom_id: "thread:redirectSupport"
     },
     {
       type: 2,
@@ -212,7 +303,10 @@ const moderationHelpReasons = [{
 }];
 
 module.exports = {
-  internalClose,
+  confirmClose,
+  internalLeave,
+  cancelClose,
+  cancelSuspend,
   internalButtons,
   moveToAdmins,
   blockUserModal,

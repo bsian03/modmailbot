@@ -42,7 +42,7 @@ module.exports = bot => {
     );
 
     if (! targetCategory) {
-      return thread.postSystemMessage("No matching category.");
+      return utils.postError(thread, "No matching category found.");
     }
 
     try {
@@ -51,14 +51,14 @@ module.exports = bot => {
         if(utils.isAdmin(msg.member)){
           return threads.moveThread(thread, targetCategory, false);
         } else {
-          thread.postSystemMessage("Only admins are allowed to move threads to this category");
+          utils.postError(thread, "Only admins are allowed to move threads to this category");
         }
       } else {
         threads.moveThread(thread, targetCategory, ! utils.isAdmin(msg.member));
       }
     } catch (err) {
       utils.handleError(err);
-      return thread.postSystemMessage("Something went wrong while trying to move this thread.");
+      return utils.postError(thread, "Something went wrong while trying to move this thread.");
     }
   });
 

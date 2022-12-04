@@ -28,12 +28,12 @@ module.exports = bot => {
         for (let id of messages) {
           bot.deleteMessage(channel.id, id).catch(() => null);
         }
-        thread.postSystemMessage(`Purged ${count} messages.`);
+        utils.postSuccess(thread, `Purged \`${count}\` message(s).`);
       } catch (err) {
-        thread.postSystemMessage(`Error deleting messages: ${err.message}`);
+        utils.postError(thread, `Error deleting messages: ${err.message}`);
       }
     } else {
-      thread.postSystemMessage("I couldn't find any messages to delete.");
+      utils.postError(thread, "I couldn't find any messages to delete.");
     }
   });
 
@@ -45,21 +45,21 @@ module.exports = bot => {
     // @ts-ignore
     const channel = await thread.getDMChannel();
     if (! channel || ! channel.id) {
-      return thread.postSystemMessage("Error getting DM Channel");
+      return utils.postError(thread, "Error getting DM Channel");
     }
 
-    const messages = await bot.getMessages(channel.id, 100);
+    const messages = await bot.getMessages(channel.id, { limit: 100 });
     const message = messages.filter(m => m.author.id === bot.user.id)[0];
 
     if (message) {
       try {
         await bot.deleteMessage(channel.id, message.id);
-        thread.postSystemMessage("Purged 1 message.");
+        utils.postSuccess(thread, "Purged `1` message.");
       } catch (err) {
-        thread.postSystemMessage(`Error deleting messages: ${err.message}`);
+        utils.postError(thread, `Error deleting messages: ${err.message}`);
       }
     } else {
-      thread.postSystemMessage("I couldn't find a message to delete.");
+      utils.postError(thread, "I couldn't find a message to delete.");
     }
   });
 };

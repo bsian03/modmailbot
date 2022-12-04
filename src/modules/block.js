@@ -11,16 +11,16 @@ const utils = require("../utils/utils");
 module.exports = bot => {
   threadUtils.addInboxServerCommand(bot, "block", async (msg, args, thread) => {
     const userId = (thread && thread.user_id) || utils.getUserMention(args.shift());
-    if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+    if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
     let user = bot.users.get(userId);
     if (! user) {
       user = await bot.getRESTUser(userId).catch(() => null);
-      if (! user) return utils.postSystemMessageWithFallback(msg.channel, thread, "User not found!");
+      if (! user) return utils.postError(thread, "I can't find that user!", null, msg);
     }
 
     const isBlocked = await blocked.isBlocked(user.id);
-    if (isBlocked) return utils.postSystemMessageWithFallback(msg.channel, thread, `${user.username}#${user.discriminator} is already blocked!`);
+    if (isBlocked) return utils.postError(thread, `${user.username}#${user.discriminator} is already blocked!`, null, msg);
 
     const reason = args.join(" ").trim();
 
@@ -33,29 +33,29 @@ module.exports = bot => {
     await blocked.block(user.id, `${user.username}#${user.discriminator}`, msg.author.id)
       .then(() => {
         blocked.logBlock(user, msg.member, reason);
-        utils.postSystemMessageWithFallback(msg.channel, thread, `Blocked <@${user.id}> (${user.id}) from modmail!`);
+        utils.postSuccess(thread, `***${user.username}#${user.discriminator} has been blocked from modmail!***`, null, msg);
       });
   });
 
   threadUtils.addInboxServerCommand(bot, "unblock", async (msg, args, thread) => {
     const userId = (thread && thread.user_id) || utils.getUserMention(args.shift());
-    if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+    if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
     let user = bot.users.get(userId);
     if (! user) {
       user = await bot.getRESTUser(userId).catch(() => null);
-      if (! user) return utils.postSystemMessageWithFallback(msg.channel, thread, "User not found!");
+      if (! user) return utils.postError(thread, "I can't find that user!", null, msg);
     }
 
     const isBlocked = await blocked.isBlocked(user.id);
-    if (! isBlocked) return utils.postSystemMessageWithFallback(msg.channel, thread, `${user.username}#${user.discriminator} isn't blocked!`);
+    if (! isBlocked) return utils.postError(thread, `${user.username}#${user.discriminator} is not blocked from modmail!`, null, msg);
 
     let reason = args.join(" ").trim();
 
     await blocked.unblock(userId)
       .then(() => {
         blocked.logBlock(user, msg.member, reason, true);
-        utils.postSystemMessageWithFallback(msg.channel, thread, `Unblocked <@${userId}> (${userId}) from modmail!`);
+        utils.postSuccess(thread, `***${user.username}#${user.discriminator} has been unblocked from modmail!***`, null, msg);
       });
   });
 };

@@ -21,12 +21,12 @@ module.exports = bot => {
         userId = utils.getUserMention(args.shift());
       }
 
-      if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+      if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
       user = bot.users.get(userId);
       if (! user) {
         user = await bot.getRESTUser(userId).catch(() => null);
-        if (! user) return utils.postSystemMessageWithFallback(msg.channel, thread, "User not found!");
+        if (! user) return utils.postError(thread, "I can't find that user!", null, msg);
       }
 
       usage = `!note ${userId} <note>`;
@@ -36,14 +36,14 @@ module.exports = bot => {
     let userNotes = await notes.get(userId);
 
     if (! text)
-      utils.postSystemMessageWithFallback(msg.channel, thread, `Incorrect command usage. Add a note with \`${usage}\`.`);
+      utils.postError(thread, `Incorrect command usage. Add a note with \`${usage}\`.`, null, msg);
     else if (userNotes.some(note => note.note === text))
-      utils.postSystemMessageWithFallback(msg.channel, thread, "This note already exists, try something else.");
+      utils.postError(thread, "This note already exists, try something else.", null, msg);
     else {
       await notes.add(userId, text.replace(/\n/g, " "), msg.author, thread);
-      utils.postSystemMessageWithFallback(msg.channel, thread, `Added ${
+      utils.postSuccess(thread, `Added ${
         userNotes.length ? "another" : "a"
-      } note for ${user ? `${user.username}#${user.discriminator}` : thread.user_name}!`);
+      } note for ${user ? `${user.username}#${user.discriminator}` : thread.user_name}!`, null, msg);
     }
   });
 
@@ -59,17 +59,17 @@ module.exports = bot => {
       usage = `!note ${userId} <note>`;
     }
 
-    if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+    if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
     let user = bot.users.get(userId);
 
     if (! user) {
       user = await bot.getRESTUser(userId).catch(() => null);
-      if (! user) return utils.postSystemMessageWithFallback(msg.channel, thread, "User not found!");
+      if (! user) return utils.postError(thread, "I can't find that user!", null, msg);
     }
 
     const userNotes = await notes.get(userId);
-    if (! userNotes || ! userNotes.length) return utils.postSystemMessageWithFallback(msg.channel, thread, `There are no notes for this user. Add one with \`${usage}\`.`);
+    if (! userNotes || ! userNotes.length) return utils.postError(thread, `There are no notes for this user. Add one with \`${usage}\`.`, null, msg);
 
     const paginated = paginate(userNotes.map((note, i) => {
       note.i = i + 1;
@@ -164,13 +164,13 @@ module.exports = bot => {
         userId = utils.getUserMention(args.shift());
       }
 
-      if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+      if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
       user = bot.users.get(userId);
 
       if (! user) {
         user = await bot.getRESTUser(userId).catch(() => null);
-        if (! user) return utils.postSystemMessageWithFallback(msg.channel, thread, "User not found!");
+        if (! user) return utils.postError(thread, "I can't find that user!", null, msg);
       }
 
       usage = `!note ${userId} <note>`;
@@ -178,20 +178,20 @@ module.exports = bot => {
 
     const userNotes = await notes.get(userId);
     if (! userNotes && ! userNotes.length) {
-      utils.postSystemMessageWithFallback(msg.channel, thread, `I can't edit what isn't there! Add a note with \`${usage}\`.`);
+      utils.postError(thread, `I can't edit what isn't there! Add a note with \`${usage}\`.`, null, msg);
     } else {
       let id = parseInt(args[0]);
       let text = args.slice(1).join(" ");
 
       if (isNaN(id)) {
-        utils.postSystemMessageWithFallback(msg.channel, thread, "Invalid ID!");
+        utils.postError(thread, "Invalid ID!", null, msg);
       } else if (! text) {
-        utils.postSystemMessageWithFallback(msg.channel, thread, "You didn't provide any text.");
+        utils.postError(thread, "You didn't provide any text.", null, msg);
       } else if (id > userNotes.length) {
-        utils.postSystemMessageWithFallback(msg.channel, thread, "That note doesn't exist.");
+        utils.postError(thread, "That note doesn't exist.", null, msg);
       } else {
         await notes.edit(userId, id, text.replace(/\n/g, " "), msg.author);
-        utils.postSystemMessageWithFallback(msg.channel, thread, `Edited note for ${user ? `${user.username}#${user.discriminator}` : thread.user_name}`);
+        utils.postSuccess(thread, `Edited note for ${user ? `${user.username}#${user.discriminator}` : thread.user_name}`, null, msg);
       }
     }
   });
@@ -208,13 +208,13 @@ module.exports = bot => {
         userId = utils.getUserMention(args.shift());
       }
 
-      if (! userId) return utils.postSystemMessageWithFallback(msg.channel, thread, "Please provide a user mention or ID!");
+      if (! userId) return utils.postError(thread, "Please provide a user mention or ID!", null, msg);
 
       user = bot.users.get(userId);
 
       if (! user) {
         user = await bot.getRESTUser(userId).catch(() => null);
-        if (! user) return utils.postSystemMessageWithFallback(msg.channel, thread, "User not found!");
+        if (! user) return utils.postError(thread, "I can't find that user!", null, msg);
       }
 
       usage = `!note ${userId} <note>`;
@@ -222,20 +222,20 @@ module.exports = bot => {
 
     const userNotes = await notes.get(userId);
     if (! userNotes || ! userNotes.length) {
-      utils.postSystemMessageWithFallback(msg.channel, thread, `${user ? `${user.username}#${user.discriminator}` : thread.user_name} doesn't have any notes to delete, add one with \`${usage}\`.`);
+      utils.postError(thread, `${user ? `${user.username}#${user.discriminator}` : thread.user_name} doesn't have any notes to delete, add one with \`${usage}\`.`, null, msg);
     } else {
       let id = parseInt(args[0]);
       if (args.length && args[0].toLowerCase() === "all")
         id = -1;
       if (isNaN(id))
-        utils.postSystemMessageWithFallback(msg.channel, thread, "Invalid ID!");
+        utils.postError(thread, "Invalid ID!", null, msg);
       else if (id > userNotes.length)
-        utils.postSystemMessageWithFallback(msg.channel, thread, "That note doesn't exist.");
+        utils.postError(thread, "That note doesn't exist.", null, msg);
       else {
         await notes.del(userId, id);
-        utils.postSystemMessageWithFallback(msg.channel, thread, `Deleted ${
+        utils.postSuccess(thread, `Deleted ${
           id <= 0 ? "all notes" : "note"
-        } for ${user ? `${user.username}#${user.discriminator}` : thread.user_name}!`);
+        } for ${user ? `${user.username}#${user.discriminator}` : thread.user_name}!`, null, msg);
       }
     }
   });

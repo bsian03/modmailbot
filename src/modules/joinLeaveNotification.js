@@ -2,7 +2,7 @@ const Eris = require("eris");
 const config = require("../../config2.json");
 const threads = require("../data/threads");
 const utils = require("../utils/utils");
-const {internalClose} = require("../utils/components");
+const {internalLeave} = require("../utils/components");
 
 /**
  * @param {Eris.CommandClient} bot
@@ -22,7 +22,7 @@ module.exports = bot => {
 
     let thread = await threads.findOpenThreadByUserId(member.id);
     if (thread !== null) {
-      return await thread.postSystemMessage("**The user has re-joined the server.**");
+      return utils.postInfo(thread, "**User has joined the server.**");
     }
   });
 
@@ -40,12 +40,7 @@ module.exports = bot => {
 
     let thread = await threads.findOpenThreadByUserId(member.id);
     if (thread !== null) {
-      const leaveNotice = {
-        content: `**The user has left the server.**\nUserID: ${member.id}`,
-        components: internalClose,
-      };
-
-      return await thread.postSystemMessage(leaveNotice, true);
+      return utils.postInfo(thread, "**User has left the server.**", internalLeave);
     }
   });
 };

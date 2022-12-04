@@ -17,7 +17,7 @@ module.exports = (bot, sse) => {
 
     // TODO Move this to thread.replyToUser to cover inline snippets inside snippets
     const text = await utils.parseText(args.join(" ").trim()).catch((e) => {
-      if (e.message === "UNKNOWN_SNIPPETS") thread.postSystemMessage("The following snippets do not exist: " + e.matches.join(", "));
+      if (e.message === "UNKNOWN_SNIPPETS") utils.postError(thread, "The following snippets do not exist: " + e.matches.join(", "));
       else throw e;
     });
     if (text == null) return;

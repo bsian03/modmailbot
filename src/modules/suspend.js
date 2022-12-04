@@ -1,6 +1,8 @@
 const Eris = require("eris");
 const threads = require("../data/threads");
+const { cancelSuspend } = require("../utils/components");
 const threadUtils = require("../utils/threadUtils");
+const utils = require("../utils/utils");
 
 /**
  * @param {Eris.CommandClient} bot
@@ -9,7 +11,7 @@ module.exports = bot => {
   threadUtils.addInboxServerCommand(bot, "suspend", async (msg, args, thread) => {
     if (! thread) return;
     await thread.suspend();
-    thread.postSystemMessage("**Thread suspended!** This thread will act as closed until unsuspended with `!unsuspend`");
+    utils.postSuccess(thread, "***Thread suspended*** | This thread will act as closed until unsuspended.", cancelSuspend);
   });
 
   threadUtils.addInboxServerCommand(bot, "unsuspend", async msg => {
@@ -18,11 +20,11 @@ module.exports = bot => {
 
     const otherOpenThread = await threads.findOpenThreadByUserId(thread.user_id);
     if (otherOpenThread) {
-      thread.postSystemMessage(`Cannot unsuspend; there is another open thread with this user: <#${otherOpenThread.channel_id}>`);
+      utils.postError(thread, `Cannot unsuspend; there is another open thread with this user: <#${otherOpenThread.channel_id}>`);
       return;
     }
 
     await thread.unsuspend();
-    thread.postSystemMessage("**Thread unsuspended!**");
+    utils.postSuccess(thread, "***Thread unsuspended***");
   });
 };

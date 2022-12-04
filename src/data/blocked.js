@@ -55,7 +55,7 @@ async function unblock(userId) {
  */
 function logBlock(user, moderator, reason, isUnblock = false) {
   const logData = {
-    embed: {
+    embeds: [{
       author: {name: `${isUnblock ? "Unblock" : "Block"} | ${user.username}#${user.discriminator}`},
       color: isUnblock ? 0x43B582 : 0xF04947,
       timestamp: new Date(),
@@ -63,9 +63,9 @@ function logBlock(user, moderator, reason, isUnblock = false) {
       fields: [
         {name: "User", value: `${user.mention}`, inline: true},
         {name: "Moderator", value: `${moderator.mention}`, inline: true},
-        {name: "Reason", value: `${reason ?? "No Reason Given"}`, inline: true}
+        {name: "Reason", value: `${reason ? reason : "No Reason Given"}`, inline: true}
       ]
-    }
+    }]
   };
 
   utils.getLogChannel().then(c => c.createMessage(logData));
