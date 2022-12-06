@@ -102,13 +102,6 @@ module.exports = {
         });
         break;
       }
-      case "closeIn5m": {
-        const closeAt = moment.utc().add(300000, "ms");
-
-        await thread.scheduleClose(closeAt.format("YYYY-MM-DD HH:mm:ss"), interaction.member);
-        utils.postInteractionSuccess(interaction, `***Thread will now close in 5 minutes.***`, components.cancelClose);
-        break;
-      }
       case "closeIn10m": {
         const closeAt = moment.utc().add(600000, "ms");
 
@@ -159,7 +152,7 @@ module.exports = {
           await thread.cancelScheduledClose();
           utils.postInteractionSuccess(interaction, "***Thread close has been canceled.***");
         } else {
-          utils.postInteractionError(interaction, "This thread is not scheduled to close");
+          utils.postInteractionInfo(interaction, "This thread is not scheduled to close");
         }
         break;
       }

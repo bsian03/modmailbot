@@ -10,8 +10,8 @@ const confirmClose = [{
     placeholder: "Select a time to schedule close",
     options: [
         {
-            label: "Close in 5mins",
-            value: "thread:closeIn5m",
+            label: "Close in 10mins",
+            value: "thread:closeIn10m",
             emoji: {
               name: "DaveHangUp",
               id: "815830349816659968",
@@ -99,7 +99,7 @@ const internalLeave = [{
     {
       type: 2,
       style: 4,
-      label: "Close in 10m",
+      label: "Close",
       emoji: {
         name: "DaveHangUp",
         id: "815830349816659968"

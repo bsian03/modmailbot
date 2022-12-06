@@ -30,7 +30,7 @@ module.exports = {
 
     await blocked[customID](thread.user_id, thread.user_name, moderator.id)
       .then(() => {
-        if (customID === "block") thread.replyToUser(moderator, `You have been blocked for ${reason}`, []);
+        if (customID === "block") thread.replyToUser(moderator, `You have been blocked from modmail for: ${reason}`, []);
         blocked.logBlock({
           id: thread.user_id,
           username: thread.user_name.split("#")[0],

@@ -81,6 +81,12 @@ module.exports = (bot, sse) => {
       }
 
       let closeMsg = "Thread will now close in ";
+      
+      if (delay <= 300000) {
+        utils.postError(thread, "You must set a time above 5 minutes.");
+        return;
+      }
+
       if (delay === 314000) { // Pi easter egg
         if (msg.author.id !== "334093318818627586") {
           utils.postError(thread, "Invalid delay specified. Only Pi can set a thread to close for 314 seconds!");

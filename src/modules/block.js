@@ -25,7 +25,7 @@ module.exports = bot => {
     const reason = args.join(" ").trim();
 
     if (thread) {
-      let text = `You have been blocked${reason ? ` for ${reason}` : "."}`;
+      let text = `You have been blocked from modmail${reason ? ` for: ${reason}` : "."}`;
       if (msg.attachments.length) await attachments.saveAttachmentsInMessage(msg);
       await thread.replyToUser(msg.member, text, msg.attachments, config.replyAnonDefault);
     }
