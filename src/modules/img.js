@@ -1,6 +1,6 @@
 const Eris = require("eris");
 const threadUtils = require("../utils/threadUtils");
-const { getSelfUrl, regEscape } = require("../utils/utils");
+const { getSelfUrl, regEscape, sendError } = require("../utils/utils");
 
 const DISCORD_REGEX = /(https:\/\/(canary\.|beta\.)?discord(app)?\.com\/channels\/\d{17,19}\/\d{17,19}\/)?\d{17,19}/g;
 /**
@@ -26,7 +26,7 @@ module.exports = bot => {
     if (! dmChannel) return;
 
     const discordURLsRegex = msg.content.match(DISCORD_REGEX);
-    if (! args.length || ! discordURLsRegex) return bot.createMessage(msg.channel.id, "<:dynoError:696561633425621078> Provide message or attachment URL(s)");
+    if (! args.length || ! discordURLsRegex) return sendError(msg, "Provide message or attachment URL(s)");
     const discordURLs = await Promise.all(msg.content.match(DISCORD_REGEX).map(async url => {
       const asArray = url.split("/");
       const messageID = asArray[asArray.length - 1];
@@ -43,7 +43,7 @@ module.exports = bot => {
     });
 
     const attachments = msg.content.match(ATTACHMENT_REGEX(selfURL));
-    if (! attachments || ! attachments.length) return bot.createMessage(msg.channel.id, "<:dynoError:696561633425621078> Could not find an attachment");
+    if (! attachments || ! attachments.length) return sendError(msg, "Could not find an attachment");
     const urls = attachments.join("\n").replace(DISCORD_ATTACHMENT_REGEX(selfURL), `https://cdn.discordapp.com/attachments/${dmChannel.id}`);
     bot.createMessage(msg.channel.id, urls);
   });

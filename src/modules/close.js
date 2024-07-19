@@ -41,7 +41,7 @@ module.exports = (bot, sse) => {
   threadUtils.addInboxServerCommand(bot, "close", async (msg, args, thread) => {
     if (args[0] === "missed") {
       const threadsShouldClosed = await threads.getThreadsThatShouldBeClosed();
-      if (threadsShouldClosed.length === 0) return bot.createMessage(msg.channel.id, "No threads that should be closed");
+      if (threadsShouldClosed.length === 0) return utils.sendInfo(msg, "No threads that should be closed");
       const threadList = threadsShouldClosed.map((t) => `${t.user_name} (${t.user_id}) - <#${t.channel_id}>`).join("\n");
 
       bot.createMessage(msg.channel.id, threadList);

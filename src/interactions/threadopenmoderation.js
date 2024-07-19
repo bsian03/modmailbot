@@ -19,8 +19,8 @@ module.exports = {
       throw new Error(`Unexpected channel type ${message.channel.type} from ${message.jumpLink}`);
     }
     const opening = awaitingOpen.get(message.channel.id);
-    if (! opening || Date.now() - opening.timestamp > 300000) {
-      return utils.postInteractionInfo(interaction, "Thread creation timed out. Please send another message and try again.", null, true);
+    if (! opening || Date.now() - opening.timestamp > 600000) {
+      return utils.postInteractionInfo(interaction, "Thread creation timed out. Please send a new message and try again.", null, true);
     }
 
     switch (customID) {

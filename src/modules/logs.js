@@ -17,6 +17,9 @@ module.exports = bot => {
       if (utils.isCommunityTeam(msg.member) && ! utils.isStaff(msg.member)){
         userThreads = userThreads.filter((t) => t.isCT );
       }
+      if (utils.isSeniorSupport(msg.member) && ! utils.isStaff(msg.member)){
+        userThreads = userThreads.filter((t) => t.isSupp );
+      }
       if (! utils.isAdmin(msg.member)) {
         userThreads = userThreads.filter((t) => ! t.isPrivate);
       }

@@ -26,6 +26,7 @@ module.exports = bot => {
     const trigger = msg.content.replace(config.snippetPrefix, "").toLowerCase();
     const snippet = await snippets.get(trigger);
     if (! snippet) return;
+    if (trigger === "isDisabled") return;
 
     await thread.replyToUser(msg.member, snippet.body, [], true);
     msg.delete();
@@ -46,12 +47,15 @@ module.exports = bot => {
     }
 
     if (snippet) {
+      if (trigger === "isDisabled") {
+        return utils.postError(thread, "This snippet can only be edited by Dave and cannot be deleted!");
+      }
       if (args[1] === "raw") {
         // Post the raw snippet in a codeblock if it exists.
         utils.postSystemMessageWithFallback(msg.channel, thread, `\`${config.snippetPrefix}${trigger}\` replies ${snippet.is_anonymous ? "anonymously " : ""}with:\n\`\`\`\n${snippet.body}\`\`\``);
       } else if (text) {
         // If the snippet exists and we're trying to create a new one, inform the user the snippet already exists
-        utils.postError(thread, `Snippet \`${trigger}\` already exists! You can edit or delete it with ${config.prefix}edit_snippet and ${config.prefix}delete_snippet respectively.`, null, msg);
+        utils.postError(thread, `Snippet \`${trigger}\` already exists! You can edit or delete it with ${config.prefix}es and ${config.prefix}ds respectively.`, null, msg);
       } else {
         // If the snippet exists and we're NOT trying to create a new one, show info about the existing snippet
         utils.postSystemMessageWithFallback(msg.channel, thread, `\`${config.snippetPrefix}${trigger}\` replies ${snippet.is_anonymous ? "anonymously " : ""}with:\n${snippet.body}`);
@@ -79,6 +83,10 @@ module.exports = bot => {
       utils.postError(thread, `Snippet \`${trigger}\` doesn't exist!`, null, msg);
       return;
     }
+    if (trigger === "isDisabled") {
+      utils.postError(thread, "This snippet can only be edited by Dave and cannot be deleted!");
+      return;
+    }
 
     await snippets.del(trigger);
     utils.postSuccess(thread, `Snippet \`${trigger}\` deleted!`, null, msg);
@@ -96,6 +104,10 @@ module.exports = bot => {
     const snippet = await snippets.get(trigger);
     if (! snippet) {
       utils.postError(thread, `Snippet \`${trigger}\` doesn't exist!`, null, msg);
+      return;
+    }
+    if (trigger === "isDisabled") {
+      utils.postError(thread, "This snippet can only be edited by Dave and cannot be deleted!");
       return;
     }
 
@@ -116,6 +128,10 @@ module.exports = bot => {
     const snippet = await snippets.get(trigger);
     if (! snippet) {
       utils.postError(thread, `Snippet \`${trigger}\` doesn't exist!`, null, msg);
+      return;
+    }
+    if (trigger === "isDisabled") {
+      utils.postError(thread, "This snippet can only be edited by Dave and cannot be deleted!");
       return;
     }
 

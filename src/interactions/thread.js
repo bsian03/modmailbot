@@ -143,7 +143,7 @@ module.exports = {
         break;
       }
       case "greeting8": {
-        let snip = await snippets.get("appeal");
+        let snip = await snippets.get("report");
         if (! snip) return utils.postInteractionError(interaction, "I can't find that snippet", null, true);
         interaction.acknowledge();
         await thread.replyToUser(interaction.member, snip.body, [], config.replyAnonDefault);

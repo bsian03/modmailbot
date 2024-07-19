@@ -58,8 +58,10 @@ async function createNewThreadForUser(user, topic, quiet = false) {
 
   console.log(`[NOTE] Creating new thread channel ${channelName}`);
 
-  // Attempt to create the inbox channel for this thread
-  const createdChannel = await utils.getInboxGuild().then(g => g.createChannel(channelName, 0, { reason: "New ModMail thread", parentID: config.newThreadCategoryId }));
+  // Attempt to create the inbox channel for this thread. if user selects premium help open thread in support category
+  const createdChannel = await utils.getInboxGuild().then(g => g.createChannel(channelName, 0, {
+    reason: "New ModMail thread", parentID: topic === "Subscription/Payment Issues" ? config.supportThreadCategoryId : config.newThreadCategoryId
+  }));
 
   // Save the new thread in the database
   const newThreadId = await createThreadInDB({
@@ -143,7 +145,7 @@ async function moveThread(thread, targetCategory, mentionRole) {
     syncThreadChannel(threadChannel, targetCategory);
 
     // Make thread private/unprivate
-    if (targetCategory.id !== config.newThreadCategoryId && targetCategory.id !== config.communityThreadCategoryId) {
+    if (targetCategory.id !== config.newThreadCategoryId && targetCategory.id !== config.communityThreadCategoryId && targetCategory.id !== config.supportThreadCategoryId) {
       thread.makePrivate();
 
       // Ping Admins if necessary

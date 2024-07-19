@@ -165,7 +165,7 @@ class Thread {
 
     const threadMessage = await this.postToThreadChannel(threadContent, attachmentFiles);
     if (! threadMessage) {
-      await bot.createMessage(msg.channel.id, "The current thread was automatically closed due to an internal error. Please send another message to open a new thread.");
+      await utils.sendError(msg, "The current thread was closed automatically due to an internal error. Please send another message to open a new thread.");
       return;
     }
 
@@ -590,6 +590,9 @@ class Thread {
       if(! this.isCT && channel.parentID == config.communityThreadCategoryId) {
         this.addCommunityAccess();
       }
+      if(! this.isSupp && channel.parentID == config.supportThreadCategoryId) {
+        this.addSupportAccess();
+      }
       if (this.isPrivate && (channel.parentID == config.newThreadCategoryId || channel.parentID == config.communityThreadCategoryId)) {
         this.makePublic();
       } else if (! this.isPrivate && (channel.parentID != config.newThreadCategoryId && channel.parentID != config.communityThreadCategoryId)) {
@@ -727,6 +730,17 @@ class Thread {
   /**
    * @returns {Promise<void>}
    */
+  async addSupportAccess() {
+    return await knex("threads")
+      .where("id", this.id)
+      .update({
+        isSupp: true
+      });
+  }
+
+  /**
+   * @returns {Promise<void>}
+   */
   async addCommunityAccess() {
     return await knex("threads")
       .where("id", this.id)
@@ -734,6 +748,7 @@ class Thread {
         isCT: true
       });
   }
+
   /**
    * @param {String} userId
    * @returns {String?}

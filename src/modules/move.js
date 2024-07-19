@@ -49,6 +49,10 @@ module.exports = bot => {
       if(targetCategory.id == config.communityThreadCategoryId) {
         //for specifically moving to the community category
         return threads.moveThread(thread, targetCategory, false);
+      }
+      if(targetCategory.id == config.supportThreadCategoryId) {
+        //for specifically moving to the support category
+        return threads.moveThread(thread, targetCategory, false);
       } else {
         threads.moveThread(thread, targetCategory, ! utils.isAdmin(msg.member));
       }

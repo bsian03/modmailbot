@@ -6,8 +6,10 @@ const config = require("./config");
 const bot = require("./bot");
 const Queue = require("./utils/queue");
 const utils = require("./utils/utils");
+const components = require("./utils/components");
 const blocked = require("./data/blocked");
 const threads = require("./data/threads");
+const snippet = require("./data/snippets");
 
 const reply = require("./modules/reply");
 const alert = require("./modules/alert");
@@ -33,11 +35,13 @@ const exec = require("./modules/exec");
 const restart = require("./modules/restart");
 const info = require("./modules/info");
 const setavatar = require("./modules/setavatar");
+const setbanner = require("./modules/setbanner");
 const dmlink = require("./modules/dmlink");
 const stats = require("./modules/stats");
 const say = require("./modules/say");
 const modformat = require("./modules/modformat");
 const joinLeave = require("./modules/joinLeaveNotification");
+const modmail = require("./modules/modmail");
 
 const attachments = require("./data/attachments");
 const {ACCIDENTAL_THREAD_MESSAGES} = require("./utils/constants");
@@ -53,11 +57,12 @@ let webInit = false;
 // Once the bot has connected, set the bot status & activity
 bot.on("ready", () => {
   bot.editStatus(null, {
-    name: config.status ?? "DM me to contact staff!",
-    type: 0
+    name: "customname",
+    state: "📬" + config.status ?? "DM me to contact staff!",
+    type: 4
   });
 
-  console.log("Connected! Now listening to DMs.");
+  console.log("Dave online! Now listening to DMs.");
 
   const data = updateSSE();
 
@@ -99,7 +104,7 @@ bot.on("error", (e) => process.emit("unhandledRejection", e, Promise.resolve()))
 bot.on("messageCreate", async msg => {
   if (! msg.guildID || msg.author.bot) return;
   if (! (await utils.messageIsOnInboxServer(msg))) return;
-  if (! utils.isStaff(msg.member) && ! utils.isCommunityTeam(msg.member)) return; // Only run if messages are sent by moderators (and now ct too) to avoid a ridiculous number of DB calls
+  if (! utils.isAllowed(msg.member)) return; // Only run if messages are sent by users able to use Dave to avoid a ridiculous number of DB calls
 
   // Lance $ping command
 
@@ -143,21 +148,29 @@ bot.on("messageCreate", async msg => {
   const isBlocked = await blocked.isBlocked(msg.author.id);
 
   if (isBlocked) return;
-  if (msg.content.length > 1900) return bot.createMessage(msg.channel.id, `Your message is too long to be recieved by Dave. Please shorten it! (${msg.content.length}/1900)`);
+  if (msg.content.length > 1900) return utils.sendInfo(msg, `Your message is too long to be recieved, please try again. (${msg.content.length}/1900)`);
 
   // Private message handling is queued so e.g. multiple message in quick succession don't result in multiple channels being created
 
   messageQueue.add(async () => {
+
     let thread = await threads.findOpenThreadByUserId(msg.author.id);
 
     // New thread
     if (! thread) {
+      let isDisabled = await snippet.get("isDisabled");
+      if (isDisabled && isDisabled.body.toLowerCase().includes("disabled")) {
+          let disabledSnippet = await snippet.get("disabled");
+          let disabledMessage = disabledSnippet ? disabledSnippet.body : "ModMail is currently unavailable while the server is closed.\n If there is an outage please check <#535189342898094081> for updates.";
+          return utils.sendInfo(msg, disabledMessage);
+      }
+      
       const opening = awaitingOpen.get(msg.channel.id);
 
       if (opening) {
         const timestamp = Date.now();
 
-        if (timestamp - opening.timestamp > 300000) {
+        if (timestamp - opening.timestamp > 600000) {
           awaitingOpen.delete(msg.channel.id);
         } else {
           if (timestamp - opening.lastWarning < 10000) return;
@@ -165,13 +178,16 @@ bot.on("messageCreate", async msg => {
           opening.lastWarning = timestamp;
           awaitingOpen.set(msg.channel.id, opening);
 
-          return bot.createMessage(msg.channel.id, "Please press one of the options provided before sending anymore messages!");
+          return utils.sendInfo(msg, "Please press one of the options provided before sending anymore messages!");
         }
       }
 
       // Ignore messages that shouldn't usually open new threads, such as "ok", "thanks", etc.
 
       if (config.ignoreAccidentalThreads && msg.content && ACCIDENTAL_THREAD_MESSAGES.includes(msg.content.trim().toLowerCase())) return;
+
+      // Auto responses
+
       if (config.autoResponses && config.autoResponses.length && msg.content) {
         const result = config.autoResponses.filter(o => o).find(o => {
           const doesMatch = (o, match) => {
@@ -201,62 +217,42 @@ bot.on("messageCreate", async msg => {
         });
 
         if (result) {
-          return bot.createMessage(msg.channel.id, result.response);
+          return utils.sendInfo(msg, result.response);
         }
+      }
+
+      // If none of the above are met, also require minimum character input to ignore spam and short character messages.
+
+      if (config.ignoreAccidentalThreads && msg.content && msg.content.length <= 5) {
+        return utils.sendInfo(msg, "You must submit a longer message to open a new thread.\n  Please avoid sending one word as we cannot answer a non-existant question!");
       }
 
       awaitingOpen.set(msg.channel.id, msg);
 
-      const payload = {
-        content: config.openingMessage,
-        components: [{
-          type: 1,
-          components: [
-            {
-              type: 2,
-              custom_id: "threadopen:support",
-              style: 1,
-              label: "Dyno Support"
-            },
-            {
-              type: 2,
-              custom_id: "threadopen:premium",
-              style: 1,
-              label: "Subscription/Payment Issues"
-            },
-            {
-              type: 2,
-              custom_id: "threadopen:moderation",
-              style: 1,
-              label: "Moderation Help"
-            },
-            {
-              type: 2,
-              custom_id: "threadopen:iWantStaff",
-              style: 1,
-              label: "Apply for Staff"
-            },
-            {
-              type: 2,
-              custom_id: "threadopen:noFuckingClue",
-              style: 1,
-              label: "Other"
-            }
-          ]
-        }, {
-          type: 1,
-          components: [
-            {
-              type: 2,
-              custom_id: "threadopen:cancel",
-              style: 4,
-              label: "Cancel Thread"
-            }
-          ]
-        }]
-      };
+      return bot.createMessage(msg.channel.id, {
+        embeds: [{
+          color: 0x337FD5,
+          description: "<:DaveEgg:698046132605157396> " + config.openingMessage
+        }], components: components.openingPayload }).then(m =>
+        setTimeout(async () => {
+          m.edit({
+            embeds: [{
+              color: 0x337FD5,
+              description: "<:DaveEgg:698046132605157396> Thread creation timed out. Please send another message and try again."
+            }],
+            components: [{
+              type: 1,
+              components: m.components[0].components.map((c) => {
+                c.disabled = true;
+                c.style = 2;
+                return c;
+              })
+            }]
+          });
+          awaitingOpen.delete(msg.channel.id);
+        }, 600000) //Expire in 10m
+      );
 
-      return bot.createMessage(msg.channel.id, payload);
     }
 
     await thread.receiveUserReply(msg, sse);
@@ -284,7 +280,7 @@ bot.on("messageUpdate", async (msg, oldMessage) => {
     const thread = await threads.findOpenThreadByUserId(msg.author.id);
 
     if (! thread) return;
-    if (msg.content.length > 1900) return bot.createMessage(msg.channel.id, `Your edited message (<${utils.discordURL("@me", msg.channel.id, msg.id)}>) is too long to be recieved by Dave. (${msg.content.length}/1900)`);
+    if (msg.content.length > 1900) return utils.sendError(msg, `Your edited message (<${utils.discordURL("@me", msg.channel.id, msg.id)}>) is too long to be recieved. (${msg.content.length}/1900)`);
 
     const oldThreadMessage = await thread.getThreadMessageFromDM(msg);
     const editMessage = `**EDITED <${utils.discordURL(mainGuildId, thread.channel_id, oldThreadMessage.thread_message_id)}>:**\n${newContent}`;
@@ -294,7 +290,7 @@ bot.on("messageUpdate", async (msg, oldMessage) => {
   }
 
   // 2) Edit in the thread
-  else if ((await utils.messageIsOnInboxServer(msg)) && (utils.isStaff(msg.member) || utils.isCommunityTeam(msg.member))) {
+  else if ((await utils.messageIsOnInboxServer(msg)) && (utils.isAllowed(msg.member))) {
     const thread = await threads.findOpenThreadByChannelId(msg.channel.id);
     if (! thread) return;
 
@@ -307,7 +303,7 @@ bot.on("messageUpdate", async (msg, oldMessage) => {
  */
 bot.on("messageDelete", async msg => {
   if (! msg.member) return; // Eris 0.15.0
-  if (! utils.isStaff(msg.member) && ! utils.isCommunityTeam(msg.member)) return; // Only to prevent unnecessary DB calls, see first messageCreate event
+  if (! utils.isAllowed(msg.member)) return; // Only to prevent unnecessary DB calls, see first messageCreate event
 
   const thread = await threads.findOpenThreadByChannelId(msg.channel.id);
   if (! thread) return;
@@ -322,7 +318,7 @@ bot.on("messageDeleteBulk", async messages => {
   const {channel, member} = messages[0];
 
   if (! member) return;
-  if (! utils.isStaff(member) && ! utils.isCommunityTeam(member)) return; // Same as above
+  if (! utils.isAllowed(member)) return; // Same as above
 
   const thread = await threads.findOpenThreadByChannelId(channel.id);
   if (! thread) return;
@@ -476,7 +472,7 @@ async function deleteMessage(thread, msg) {
   if (! msg.author) return;
   if (msg.author.bot) return;
   if (! (await utils.messageIsOnInboxServer(msg))) return;
-  if (! utils.isStaff(msg.member) && ! utils.isCommunityTeam(msg.member)) return;
+  if (! utils.isAllowed(msg.member)) return;
 
   thread.deleteChatMessage(msg.id);
 }
@@ -514,11 +510,13 @@ module.exports = {
     restart(bot);
     info(bot);
     setavatar(bot);
+    setbanner(bot);
     dmlink(bot);
     stats(bot);
     say(bot);
     modformat(bot);
     joinLeave(bot);
+    modmail(bot);
 
     // Load interactions
 

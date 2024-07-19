@@ -7,12 +7,12 @@ module.exports = (bot) => {
     if (! utils.isStaff(msg.member)) return;
     bot.createMessage(msg.channel.id, {
       embeds: [{
-      description: `**Version:** ${process.version}\n**Memory Usage:** ${(process.memoryUsage.rss() / 1024 / 1024).toFixed(2)}MB\n`
+        description: `**Version:** ${process.version}\n**Memory Usage:** ${(process.memoryUsage.rss() / 1024 / 1024).toFixed(2)}MB\n`
       + `**Bot Uptime:** ${humanizeDuration(bot.uptime, { largest: 2, round: true })}\n`
       + `**Process Uptime:** ${humanizeDuration(process.uptime() * 1000, { largest: 2, round: true })}`,
-      footer: { text: `PID ${process.pid} | Dave` }
+        footer: { text: `PID ${process.pid} | Dave` }
       }]
-  });
+    });
   });
 
   bot.registerCommandAlias("uptime", "stats");

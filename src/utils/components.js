@@ -1,7 +1,52 @@
 /**
- * These component objects are used during the process of reporting a user, and
- * requesting help with subscriptions/payments!
+ * Component objects for use with interactions throughout dave
  */
+const openingPayload = [{
+  type: 1,
+  components: [
+    {
+      type: 2,
+      custom_id: "threadopen:support",
+      style: 1,
+      label: "Dyno Support"
+    },
+    {
+      type: 2,
+      custom_id: "threadopen:premium",
+      style: 1,
+      label: "Subscription/Payment Issues"
+    },
+    {
+      type: 2,
+      custom_id: "threadopen:moderation",
+      style: 1,
+      label: "Moderation Help"
+    },
+    {
+      type: 2,
+      custom_id: "threadopen:iWantStaff",
+      style: 1,
+      label: "Apply for Staff"
+    },
+    {
+      type: 2,
+      custom_id: "threadopen:noFuckingClue",
+      style: 1,
+      label: "Other"
+    }
+  ]
+}, {
+  type: 1,
+  components: [
+    {
+      type: 2,
+      custom_id: "threadopen:cancel",
+      style: 4,
+      label: "Cancel Thread"
+    }
+  ]
+}];
+
 const confirmClose = [{
   type: 1,
   components: [{
@@ -227,7 +272,7 @@ const greetingMenu = [{
     {
       type: 2,
       style: 1,
-      label: "Appeal",
+      label: "Report",
       custom_id: "thread:greeting8"
     },
     {
@@ -248,43 +293,90 @@ const greetingMenu = [{
 
 const moveMenu = [{
   type: 1,
-  components: [
-    {
-      type: 2,
-      style: 2,
-      label: "Council & Ping",
-      emoji: {
-        name: "report",
-        id: "986073682952716349"
-      },
-      custom_id: "movethread:council-ping"
+  components: [{
+    type: 2,
+    style: 2,
+    label: "Council & Ping",
+    emoji: {
+      name: "report",
+      id: "986073682952716349"
     },
-    {
-      type: 2,
-      style: 2,
-      label: "Council",
-      custom_id: "movethread:council"
-    },
-    {
-      type: 2,
-      style: 2,
-      label: "Community",
-      custom_id: "movethread:community"
-    },
-    {
-      type: 2,
-      style: 2,
-      label: "ModMail",
-      custom_id: "movethread:modmail"
-    },
-    {
-      type: 2,
-      style: 4,
-      label: "Cancel",
-      custom_id: "movethread:cancel"
-    }
+    custom_id: "movethread:council-ping"
+  },
+  {
+    type: 2,
+    style: 2,
+    label: "Council",
+    custom_id: "movethread:council"
+  },
+  {
+    type: 2,
+    style: 2,
+    label: "Support",
+    custom_id: "movethread:support"
+  },
+  {
+    type: 2,
+    style: 2,
+    label: "Community",
+    custom_id: "movethread:community"
+  },
+  {
+    type: 2,
+    style: 2,
+    label: "ModMail",
+    custom_id: "movethread:modmail"
+  }
   ]
-}];
+}, {
+  type: 1,
+  components: [{
+    type: 2,
+    style: 4,
+    label: "Cancel",
+    custom_id: "movethread:cancel"
+  }]
+}
+];
+
+/*const moveMenu = [{
+  type: 1,
+  components: [{
+    type: 3,
+    custom_id: "thread:moveMenu",
+    placeholder: "Select a catgory to move to",
+    options: [
+      {
+        label: "Council & Ping",
+        value: "movethread:council-ping"
+      },
+      {
+        label: "Council",
+        value: "movethread:council"
+      },
+      {
+        label: "Support",
+        value: "movethread:support"
+      },
+      {
+        label: "Community",
+        value: "movethread:community"
+      },
+      {
+        label: "Mod Mail",
+        value: "movethread:modmail"
+      },
+      {
+        label: "Cancel",
+        value: "movethread:cancel",
+        emoji: {
+          name: "DaveHangUp",
+          id: "815830349816659968",
+        }
+      }
+    ]
+  }]
+}];*/
 
 const blockUserModal = {
   title: "Block User!",
@@ -330,7 +422,7 @@ const reportUserModal = {
         label: "Reason",
         min_length: 1,
         max_length: 1000,
-        placeholder: "Please enter a reason!"
+        placeholder: "Please enter why you are reporting this user!"
       }]
     },
     {
@@ -350,46 +442,54 @@ const reportUserModal = {
 
 const moderationHelpReasons = [{
   type: 1,
-  components: [
-    {
-      type: 3,
-      custom_id: "threadopenmoderation:moderationHelpReasons",
-      options: [
-        {
-          "label": "Report a User",
-          "value": "threadopenmoderation:reportUser"
-        },
-        {
-          "label": "Report Dyno Impersonation",
-          "value": "threadopenmoderation:dynoImp"
-        },
-        {
-          "label": "Appeal a Ban",
-          "value": "threadopenmoderation:banAppeal"
-        },
-        {
-          "label": "Appeal a Mute",
-          "value": "threadopenmoderation:muteAppeal"
-        },
-        {
-          "label": "Other",
-          "value": "threadopenmoderation:idfk",
-          "desription": "Your issue isn't listed here? Open a thread and explain further."
-        },
-        {
-          "label": "Cancel",
-          "value": "threadopenmoderation:cancel",
-          "description": "Cancel opening a modmail thread"
-        }
-      ],
-      min_values: 1,
-      max_values: 1,
-      placeholder: "What do you need help with?"
-    }
+  components: [{
+    type: 2,
+    style: 2,
+    label: "Report a User",
+    emoji: {
+      name: "report",
+      id: "986073682952716349"
+    },
+    custom_id: "threadopenmoderation:reportUser"
+  },
+  {
+    type: 2,
+    style: 2,
+    label: "Dyno Impersonation",
+    custom_id: "threadopenmoderation:dynoImp"
+  },
+  {
+    type: 2,
+    style: 2,
+    label: "Appeal a Ban",
+    custom_id: "threadopenmoderation:banAppeal"
+  },
+  {
+    type: 2,
+    style: 2,
+    label: "Appeal a Mute",
+    custom_id: "threadopenmoderation:muteAppeal"
+  },
+  {
+    type: 2,
+    style: 2,
+    label: "Other",
+    custom_id: "threadopenmoderation:idfk"
+  }
   ]
-}];
+}, {
+  type: 1,
+  components: [{
+    type: 2,
+    style: 4,
+    label: "Cancel",
+    custom_id: "threadopenmoderation:cancel"
+  }]
+}
+];
 
 module.exports = {
+  openingPayload,
   confirmClose,
   internalLeave,
   cancelClose,

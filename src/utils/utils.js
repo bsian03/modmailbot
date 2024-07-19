@@ -186,6 +186,66 @@ function postSuccess(thread, text, component, msg) {
 }
 
 /**
+ * Posts an info embed to a channel
+ * @param {Eris.Message} msg the message object
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @returns {Promise<Eris.Message>}
+ */
+function sendInfo(msg, text, component) {
+  const daveInfo = {
+    embeds: [{
+      color: 0x337FD5,
+      description: `<:DaveEgg:698046132605157396> ${text}`,
+    }]
+  };
+  if (component) {
+    daveInfo.components = component;
+  }
+  bot.createMessage(msg.channel.id, daveInfo);
+}
+
+/**
+ * Posts an error embed to a channel
+ * @param {Eris.Message} msg the message object
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @returns {Promise<Eris.Message>}
+ */
+function sendError(msg, text, component) {
+  const daveError = {
+    embeds: [{
+      color: 0xF04947,
+      description: `<:dynoError:696561633425621078> ${text}`,
+    }]
+  };
+  if (component) {
+    daveError.components = component;
+  }
+  bot.createMessage(msg.channel.id, daveError);
+}
+
+/**
+ * Posts a success embed to a channel
+ * @param {Eris.Message} msg the message object
+ * @param {String} text the message to send
+ * @param {Eris.Component} component the compnent to add to the message
+ * @returns {Promise<Eris.Message>}
+ */
+function sendSuccess(msg, text, component) {
+  const daveSuccess = {
+    embeds: [{
+      color: 0x43B581,
+      description: `<:dynoSuccess:696561641227288639> ${text}`,
+    }]
+  };
+  if (component) {
+    daveSuccess.components = component;
+  }
+  bot.createMessage(msg.channel.id, daveSuccess);
+}
+
+/**
  * Posts a thread log in log channel
  * @param {Thread} thread the thread the log is referencing
  * @param {Eris.Member} moderator the moderator that executed the log
@@ -248,6 +308,17 @@ function isAdmin(member) {
 }
 
 /**
+ * Returns whether the given member has permission to use some specific modmail commands
+ * @param {Eris.Member} member
+ * @returns {boolean}
+ */
+function isSeniorSupport(member) {
+  if (! config.inboxSupportRoleIDs.length) return true;
+  if (! member) return false;
+  return member.roles.some((r) => config.inboxSupportRoleIDs.includes(r));
+}
+
+/**
  * Returns whether the given member has permission to use modmail commands
  * @param {Eris.Member} member
  * @returns {boolean}
@@ -267,6 +338,19 @@ function isCommunityTeam(member) {
   if (! config.inboxCTRoleIDs.length) return true;
   if (! member) return false;
   return member.roles.some((r) => config.inboxCTRoleIDs.includes(r));
+}
+
+/**
+ * Returns whether the given member has permission to trigger any modmail commands
+ * @param {Eris.Member} member
+ * @returns {boolean}
+ */
+function isAllowed(member) {
+  if (! config.inboxServerRoleIDs.length) return true;
+  if (! member) return false;
+  if (member.roles.some((r) => config.inboxCTRoleIDs.includes(r) || config.inboxSupportRoleIDs.includes(r) || config.inboxCTRoleIDs.includes(r) || config.inboxServerRoleIDs.includes(r) || config.inboxAdminRoleIDs.includes(r))) {
+    return true;
+  }
 }
 
 /**
@@ -547,13 +631,18 @@ module.exports = {
   postInfo,
   postError,
   postSuccess,
+  sendInfo,
+  sendError,
+  sendSuccess,
   postLog,
   postErrorLog,
   handleError,
 
   isAdmin,
+  isSeniorSupport,
   isStaff,
   isCommunityTeam,
+  isAllowed,
   messageIsOnInboxServer,
   messageIsOnMainServer,
 

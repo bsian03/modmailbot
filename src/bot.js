@@ -18,13 +18,10 @@ const bot = new Eris.CommandClient(`Bot ${config.token}`, {
   defaultCommandOptions: {
     caseInsensitive: true,
     errorMessage: (msg, err) => {
-      const { handleError } = require("./utils/utils");
+      const { handleError, sendError } = require("./utils/utils");
 
       handleError(err);
-      msg.channel.createMessage({embeds: [{
-        color: 0xF04947,
-        description: "<:dynoError:696561633425621078> Command failed. See logs channel for more info.",
-      }]}).catch(() => null);
+      sendError(msg, "Command failed. See logs channel for more info.");
     }
   },
   argsSplitter: (str) => str.split(" ")
